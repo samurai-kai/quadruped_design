@@ -224,74 +224,109 @@ def print_summary(p: JumpParams, r: JumpResults) -> None:
     print()
 
 def plot_profiles(p: JumpParams, r: JumpResults) -> None:
+    """
+    Plot takeoff and landing GRF profiles, showing both average and peak values
+    (in Newtons and lbf) for total vertical ground reaction force.
+    """
+
     import matplotlib.pyplot as plt
+    import numpy as np
 
-    # unit factors
+    # Unit conversions
     N2lbf = 0.224809
-
     mg = p.mass * p.g
 
-    # Landing time: PD-derived if available, else direct (simple script)
+    # Determine landing time (PD-derived or direct)
     T_land = getattr(r, "landing_time_used", None)
     if T_land is None:
-        T_land = getattr(p, "landing_time", None)
-        if T_land is None:
-            raise ValueError("Landing time not available (need r.landing_time_used or p.landing_time).")
+        raise ValueError("Landing time not available (need r.landing_time_used).")
 
-    # ----- SI plots (Newtons) -----
+    # ---- Generate trapezoidal profiles ----
     # Takeoff
     t_to, F_to = trapezoid_profile(
-        p.stance_time, r.Fgrf_avg_takeoff, r.Fgrf_peak_takeoff, mg,
-        p.rise_frac, p.fall_frac
+        p.stance_time,
+        r.Fgrf_avg_takeoff,
+        r.Fgrf_peak_takeoff,
+        mg,
+        p.rise_frac,
+        p.fall_frac
     )
-    plt.figure()
-    plt.plot(t_to, F_to)
-    plt.xlabel("Time [s]")
-    plt.ylabel("Total vertical GRF [N]")
-    plt.title("Takeoff Force Profile (SI)")
-    plt.grid(True, alpha=0.3)
-
     # Landing
     t_ld, F_ld = trapezoid_profile(
-        T_land, r.Fgrf_avg_land_time, r.Fgrf_peak_land_time, mg,
-        p.rise_frac, p.fall_frac
+        T_land,
+        r.Fgrf_avg_land_time,
+        r.Fgrf_peak_land_time,
+        mg,
+        p.rise_frac,
+        p.fall_frac
     )
-    plt.figure()
-    plt.plot(t_ld, F_ld)
-    plt.xlabel("Time [s]")
-    plt.ylabel("Total vertical GRF [N]")
-    ttl = "Landing Force Profile (SI"
-    ttl += ", PD-derived t)" if (getattr(p, "kp_per_leg", None) is not None and
-                                 getattr(p, "kd_per_leg", None) is not None and
-                                 getattr(p, "landing_time_direct", None) is None) else ")"
-    plt.title(ttl)
-    plt.grid(True, alpha=0.3)
 
-    # ----- Imperial plots (lbf) -----
+    # ---- Helper for plotting ----
+    def plot_force_profile(t, F, F_avg, F_peak, title, ylabel="GRF [N]"):
+        plt.plot(t, F, label="GRF profile", color="C0", lw=2)
+        plt.axhline(F_avg, linestyle="--", color="gray", label=f"Average = {F_avg:.0f} N")
+        plt.axhline(F_peak, linestyle=":", color="red", label=f"Peak = {F_peak:.0f} N")
+        plt.scatter([t[np.argmax(F)]], [F_peak], color="red", zorder=3)
+        plt.xlabel("Time [s]")
+        plt.ylabel(ylabel)
+        plt.title(title)
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+
+    # ---- SI (Newtons) plots ----
+    plt.figure(figsize=(6, 4))
+    plot_force_profile(
+        t_to,
+        F_to,
+        r.Fgrf_avg_takeoff,
+        r.Fgrf_peak_takeoff,
+        f"Takeoff Force Profile (Peak/Avg = {r.Fgrf_peak_takeoff / r.Fgrf_avg_takeoff:.2f}×)"
+    )
+
+    plt.figure(figsize=(6, 4))
+    title_ld = "Landing Force Profile ("
+    title_ld += "PD-derived t)" if (p.kp_per_leg and p.kd_per_leg and p.landing_time_direct is None) else "direct t)"
+    plot_force_profile(
+        t_ld,
+        F_ld,
+        r.Fgrf_avg_land_time,
+        r.Fgrf_peak_land_time,
+        f"{title_ld} (Peak/Avg = {r.Fgrf_peak_land_time / r.Fgrf_avg_land_time:.2f}×)"
+    )
+
+    # ---- Imperial (lbf) plots ----
     F_to_lbf = F_to * N2lbf
     F_ld_lbf = F_ld * N2lbf
+    Favg_to_lbf = r.Fgrf_avg_takeoff * N2lbf
+    Fpeak_to_lbf = r.Fgrf_peak_takeoff * N2lbf
+    Favg_ld_lbf = r.Fgrf_avg_land_time * N2lbf
+    Fpeak_ld_lbf = r.Fgrf_peak_land_time * N2lbf
 
-    # Takeoff (Imperial)
-    plt.figure()
-    plt.plot(t_to, F_to_lbf)
-    plt.xlabel("Time [s]")
-    plt.ylabel("Total vertical GRF [lbf]")
-    plt.title("Takeoff Force Profile (Imperial)")
-    plt.grid(True, alpha=0.3)
+    plt.figure(figsize=(6, 4))
+    plot_force_profile(
+        t_to,
+        F_to_lbf,
+        Favg_to_lbf,
+        Fpeak_to_lbf,
+        f"Takeoff Force Profile (Peak/Avg = {Fpeak_to_lbf / Favg_to_lbf:.2f}×)",
+        ylabel="GRF [lbf]"
+    )
 
-    # Landing (Imperial)
-    plt.figure()
-    plt.plot(t_ld, F_ld_lbf)
-    plt.xlabel("Time [s]")
-    plt.ylabel("Total vertical GRF [lbf]")
-    ttl_imp = "Landing Force Profile (Imperial"
-    ttl_imp += ", PD-derived t)" if (getattr(p, "kp_per_leg", None) is not None and
-                                     getattr(p, "kd_per_leg", None) is not None and
-                                     getattr(p, "landing_time_direct", None) is None) else ")"
-    plt.title(ttl_imp)
-    plt.grid(True, alpha=0.3)
+    plt.figure(figsize=(6, 4))
+    title_ld_imp = "Landing Force Profile ("
+    title_ld_imp += "PD-derived t)" if (p.kp_per_leg and p.kd_per_leg and p.landing_time_direct is None) else "direct t)"
+    plot_force_profile(
+        t_ld,
+        F_ld_lbf,
+        Favg_ld_lbf,
+        Fpeak_ld_lbf,
+        f"{title_ld_imp} (Peak/Avg = {Fpeak_ld_lbf / Favg_ld_lbf:.2f}×)",
+        ylabel="GRF [lbf]"
+    )
 
+    plt.tight_layout()
     plt.show()
+
 
 def _parse_args():
     import argparse
