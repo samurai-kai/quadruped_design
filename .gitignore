@@ -1,0 +1,25 @@
+# =============================
+# Ignore ROS 2 build artifacts
+# =============================
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# Ignore Python cache and temp files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore editor / IDE files
+.vscode/
+.idea/
+
+# Ignore OS-generated files
+.DS_Store
+Thumbs.db
+
+# Ignore any large archives or simulation outputs
+*.bag
+*.zip
+*.tar
+*.tar.gz

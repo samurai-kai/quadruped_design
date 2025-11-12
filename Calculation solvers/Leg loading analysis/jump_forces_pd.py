@@ -264,8 +264,8 @@ def plot_profiles(p: JumpParams, r: JumpResults) -> None:
     # ---- Helper for plotting ----
     def plot_force_profile(t, F, F_avg, F_peak, title, ylabel="GRF [N]"):
         plt.plot(t, F, label="GRF profile", color="C0", lw=2)
-        plt.axhline(F_avg, linestyle="--", color="gray", label=f"Average = {F_avg:.0f} N")
-        plt.axhline(F_peak, linestyle=":", color="red", label=f"Peak = {F_peak:.0f} N")
+        plt.axhline(F_avg, linestyle="--", color="gray", label=f"Average = {F_avg:.0f} lbf")
+        plt.axhline(F_peak, linestyle=":", color="red", label=f"Peak = {F_peak:.0f} lbf")
         plt.scatter([t[np.argmax(F)]], [F_peak], color="red", zorder=3)
         plt.xlabel("Time [s]")
         plt.ylabel(ylabel)

@@ -1,0 +1,43 @@
+# ==============================
+# 🐳 .dockerignore for ROS 2 Jazzy workspace
+# ==============================
+
+# --- ROS 2 build artifacts ---
+build/
+install/
+log/
+
+# --- Python cache ---
+__pycache__/
+*.pyc
+
+# --- Git and version control ---
+.git/
+.gitignore
+
+# --- VS Code / IDE settings ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# --- Large local files ---
+*.bag
+*.zip
+*.tar
+*.tar.gz
+
+# --- Simulation outputs or models you rebuild often ---
+*.stl
+*.dae
+*.obj
+*.urdf
+*.xacro
+
+# --- Docker files themselves (optional) ---
+# Dockerfile
+# .dockerignore
