@@ -123,3 +123,19 @@ if __name__ == "__main__":
     print(" - Computed using Jacobian Transpose τ = Jᵀ·F.")
     print(" - Geometry & DH parameters identical to NE statics model.")
     print("="*55)
+
+    # --- Build Jacobian (6×3) ---
+    J = sp.simplify(jacobian_sym([z1, z2, z3], [p1, p2, p3], pe))
+
+    print("\n" + "="*55)
+    print("Symbolic Jacobian J (6x3)")
+    print("="*55)
+    sp.pprint(J)
+
+    # Numeric Jacobian with substituted values
+    J_num = J.evalf(subs=subs)
+
+    print("\n" + "="*55)
+    print("Numeric Jacobian J_num (evaluated)")
+    print("="*55)
+    sp.pprint(J_num)
